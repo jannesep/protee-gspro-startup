@@ -1,4 +1,4 @@
-# ProTee + GSPro Simulator Startup
+# ProTee Labs + GSPro Simulator Startup
 
 Automated startup script for a golf simulator rig running [ProTee Labs](https://www.proteegolf.com/) with [GSPro](https://gsprogolf.com/). Optionally controls a Samsung TV via SmartThings for a fully automated experience.
 
@@ -39,12 +39,13 @@ Automated startup script for a golf simulator rig running [ProTee Labs](https://
    ```powershell
    Copy-Item samsung_auth.example.json samsung_auth.json
    ```
-   Then populate with your actual OAuth tokens from SmartThings.
+   Then populate with your actual OAuth tokens from SmartThings. For help getting the initial tokens, check [this](https://levelup.gitconnected.com/smartthings-api-taming-the-oauth-2-0-beast-5d735ecc6b24) for help
 
 5. **Run the script**
    ```powershell
    .\start-simulator.ps1
    ```
+   Instructions for Task Scheduler for automatic startup on login below
 
 ## Configuration
 
@@ -139,4 +140,5 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
+
 
