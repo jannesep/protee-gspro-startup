@@ -22,7 +22,7 @@ Automated startup script for a golf simulator rig running [ProTee Labs](https://
 
 1. **Clone the repository**
    ```powershell
-   git clone https://github.com/YOUR_USERNAME/protee-gspro-startup.git
+   git clone https://github.com/jannesep/protee-gspro-startup.git
    cd protee-gspro-startup
    ```
 
@@ -139,3 +139,4 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
+
