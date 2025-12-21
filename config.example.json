@@ -1,0 +1,22 @@
+{
+  "smartThings": {
+    "enabled": true,
+    "clientId": "YOUR_CLIENT_ID",
+    "clientSecret": "YOUR_CLIENT_SECRET",
+    "deviceId": "YOUR_DEVICE_ID",
+    "cliPath": "C:\\Scripts\\smartthings.exe"
+  },
+  "paths": {
+    "logDir": "C:\\Scripts",
+    "proteeLabsExe": "C:\\Program Files\\ProTee Labs\\ProTee Labs.exe",
+    "authFile": "samsung_auth.json"
+  },
+  "network": {
+    "maxRetries": 10,
+    "retryIntervalSeconds": 2
+  },
+  "window": {
+    "processTimeoutSeconds": 60,
+    "pollIntervalSeconds": 1
+  }
+}

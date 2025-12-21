@@ -1,0 +1,9 @@
+{
+    "access_token": "YOUR_ACCESS_TOKEN",
+    "token_type": "bearer",
+    "refresh_token": "YOUR_REFRESH_TOKEN",
+    "expires_in": 86400,
+    "scope": "x:devices:* r:devices:* w:devices:*",
+    "access_tier": 0,
+    "installed_app_id": "YOUR_INSTALLED_APP_ID"
+}

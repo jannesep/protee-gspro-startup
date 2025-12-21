@@ -1,0 +1,19 @@
+# Logs and transcripts
+*.log
+startup-log-*.txt
+
+# Configuration with secrets (use config.example.json as template)
+config.json
+
+# OAuth tokens (use samsung_auth.example.json as template)
+samsung_auth.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Windows
+Thumbs.db
+Desktop.ini
