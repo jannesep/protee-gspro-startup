@@ -15,7 +15,7 @@ Automated startup script for a golf simulator rig running [ProTee Labs](https://
 - Windows 10/11
 - PowerShell 5.1 or later
 - [ProTee Labs](https://proteevx.com/setup/) installed
-- (Optional) [SmartThings CLI](https://github.com/SmartThingsCommunity/smartthings-cli) for TV control
+- (Optional) [SmartThings CLI](https://github.com/SmartThingsCommunity/smartthings-cli) for TV control. Use the 2.x.x version
 - (Optional) Samsung TV registered with SmartThings
 
 ## Quick Start
@@ -140,6 +140,7 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
+
 
 
 
