@@ -10,8 +10,8 @@
     Designed to run after ProTee Labs is launched, giving a clean simulator experience.
 
 .NOTES
-    Author: Janne
-    Repository: https://github.com/YOUR_USERNAME/protee-gspro-startup
+    Author: Janne Seppänen
+    Repository: https://github.com/jannesep/protee-gspro-startup
     
     This script uses Windows API calls to manipulate window visibility.
     It polls for the GSPconnect process since it may take time to start.
@@ -310,3 +310,4 @@ catch {
 Write-Log "----- Window Manager Finished -----" "INFO"
 
 #endregion
+
