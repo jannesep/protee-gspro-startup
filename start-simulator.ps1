@@ -357,7 +357,7 @@ try {
     }
     
     # Step 3: Launch ProTee Labs
-    $proteeProcess = Start-ProTeeLabs -ExePath $Config.paths.proteeLabsExe
+    Start-ProTeeLabs -ExePath $Config.paths.proteeLabsExe
     
     # Step 4: Manage windows (minimize GSPconnect, focus ProTee Labs)
     Start-WindowManager | Out-Null
