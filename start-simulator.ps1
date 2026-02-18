@@ -153,6 +153,7 @@ function Update-SmartThingsToken {
     <#
     .SYNOPSIS
         Refreshes the SmartThings OAuth token using the refresh token.
+        Includes retry logic, atomic file writes, and backup for reliability.
     #>
     param(
         [Parameter(Mandatory = $true)]
@@ -162,7 +163,10 @@ function Update-SmartThingsToken {
         [string]$ClientId,
         
         [Parameter(Mandatory = $true)]
-        [string]$ClientSecret
+        [string]$ClientSecret,
+
+        [int]$MaxRetries = 3,
+        [int]$RetryDelaySeconds = 2
     )
     
     if (-not (Test-Path $AuthFilePath)) {
@@ -170,53 +174,105 @@ function Update-SmartThingsToken {
         return $null
     }
     
-    $auth = Get-Content $AuthFilePath | ConvertFrom-Json
+    $auth = Get-Content $AuthFilePath -Raw | ConvertFrom-Json
+    
+    # Backup current auth file before attempting refresh
+    $backupPath = [System.IO.Path]::ChangeExtension($AuthFilePath, ".backup.json")
+    try {
+        Copy-Item -Path $AuthFilePath -Destination $backupPath -Force
+        Write-Log "Auth file backed up to: $backupPath"
+    }
+    catch {
+        Write-Log "Failed to create auth backup: $($_.Exception.Message)" -Level "WARN"
+    }
     
     # Create Base64 encoded credentials
     $credentials = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${ClientId}:${ClientSecret}"))
     
-    try {
-        $curlArgs = @(
-            "--silent", "--show-error",
-            "--location", "https://api.smartthings.com/oauth/token",
-            "--header", "Content-Type: application/x-www-form-urlencoded",
-            "--header", "Authorization: Basic $credentials",
-            "--data-urlencode", "grant_type=refresh_token",
-            "--data-urlencode", "client_id=$ClientId",
-            "--data-urlencode", "client_secret=$ClientSecret",
-            "--data-urlencode", "refresh_token=$($auth.refresh_token)"
-        )
+    $curlArgs = @(
+        "--silent", "--show-error",
+        "--location", "https://api.smartthings.com/oauth/token",
+        "--header", "Content-Type: application/x-www-form-urlencoded",
+        "--header", "Authorization: Basic $credentials",
+        "--data-urlencode", "grant_type=refresh_token",
+        "--data-urlencode", "client_id=$ClientId",
+        "--data-urlencode", "client_secret=$ClientSecret",
+        "--data-urlencode", "refresh_token=$($auth.refresh_token)"
+    )
+    
+    # Retry loop for transient network failures
+    for ($attempt = 1; $attempt -le $MaxRetries; $attempt++) {
+        Write-Log "Token refresh attempt $attempt of $MaxRetries..."
         
-        $responseJson = & curl.exe @curlArgs 2>$null
-        
-        if ($responseJson) {
+        try {
+            $responseJson = & curl.exe @curlArgs 2>$null
+            
+            if (-not $responseJson) {
+                Write-Log "No response from SmartThings token endpoint." -Level "WARN"
+                if ($attempt -lt $MaxRetries) {
+                    Write-Log "Retrying in $RetryDelaySeconds seconds..." -Level "WARN"
+                    Start-Sleep -Seconds $RetryDelaySeconds
+                }
+                continue
+            }
+            
             $responseJson = $responseJson.Trim()
             $response = $responseJson | ConvertFrom-Json
             
-            if ($response.access_token) {
-                $auth.access_token = $response.access_token
+            # Validate that the response contains both required tokens
+            if (-not $response.access_token) {
+                Write-Log "Token refresh response missing access_token. Response: $responseJson" -Level "WARN"
+                if ($attempt -lt $MaxRetries) {
+                    Write-Log "Retrying in $RetryDelaySeconds seconds..." -Level "WARN"
+                    Start-Sleep -Seconds $RetryDelaySeconds
+                }
+                continue
+            }
+            
+            if (-not $response.refresh_token) {
+                Write-Log "Token refresh response missing refresh_token. Response: $responseJson" -Level "WARN"
+                Write-Log "Saving new access_token but keeping existing refresh_token to avoid losing it." -Level "WARN"
+                $response | Add-Member -NotePropertyName "refresh_token" -NotePropertyValue $auth.refresh_token -Force
+            }
+            
+            # Add timestamp for debugging
+            $response | Add-Member -NotePropertyName "refreshed_at" -NotePropertyValue (Get-Date -Format "o") -Force
+            
+            # Atomic write: write to temp file first, then rename
+            $tempPath = "$AuthFilePath.tmp"
+            try {
+                $response | ConvertTo-Json -Depth 5 | Set-Content -Path $tempPath -Encoding UTF8
                 
-                if ($response.PSObject.Properties.Name -contains "refresh_token") {
-                    $auth.refresh_token = $response.refresh_token
+                # Verify the temp file is valid JSON before replacing
+                $verification = Get-Content $tempPath -Raw | ConvertFrom-Json
+                if (-not $verification.access_token -or -not $verification.refresh_token) {
+                    throw "Written file failed verification: missing required token fields"
                 }
                 
-                $auth | ConvertTo-Json -Depth 5 | Set-Content -Path $AuthFilePath -Encoding UTF8
-                Write-Log "SmartThings token refreshed and saved."
-                return $auth
+                # Replace original with verified temp file
+                Move-Item -Path $tempPath -Destination $AuthFilePath -Force
+                Write-Log "SmartThings token refreshed and saved successfully."
+                return $response
             }
-            else {
-                Write-Log "Token refresh failed. Response: $responseJson" -Level "WARN"
+            catch {
+                Write-Log "Failed to save tokens to file: $($_.Exception.Message)" -Level "ERROR"
+                # Clean up temp file if it exists
+                if (Test-Path $tempPath) {
+                    Remove-Item $tempPath -Force -ErrorAction SilentlyContinue
+                }
+                Write-Log "Backup file is available at: $backupPath" -Level "WARN"
             }
         }
-        else {
-            Write-Log "No response from SmartThings token endpoint." -Level "WARN"
+        catch {
+            Write-Log "Exception during token refresh attempt ${attempt}: $($_.Exception.Message)" -Level "WARN"
+            if ($attempt -lt $MaxRetries) {
+                Write-Log "Retrying in $RetryDelaySeconds seconds..." -Level "WARN"
+                Start-Sleep -Seconds $RetryDelaySeconds
+            }
         }
-    }
-    catch {
-        Write-Log "Exception during token refresh: $($_.Exception.Message)" -Level "WARN"
     }
     
-    Write-Log "Using existing token." -Level "WARN"
+    Write-Log "All $MaxRetries token refresh attempts failed. Using existing token." -Level "WARN"
     return $auth
 }
 

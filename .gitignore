@@ -7,6 +7,8 @@ config.json
 
 # OAuth tokens (use samsung_auth.example.json as template)
 samsung_auth.json
+samsung_auth.backup.json
+samsung_auth.json.tmp
 
 # IDE and editor files
 .vscode/
