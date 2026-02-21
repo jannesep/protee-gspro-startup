@@ -5,6 +5,5 @@
     "expires_in": 86400,
     "scope": "x:devices:* r:devices:* w:devices:*",
     "access_tier": 0,
-    "installed_app_id": "YOUR_INSTALLED_APP_ID",
-    "refreshed_at": ""
+    "installed_app_id": "YOUR_INSTALLED_APP_ID"
 }
